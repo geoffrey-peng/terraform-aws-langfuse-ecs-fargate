@@ -280,13 +280,13 @@ export LANGFUSE_PUBLIC_KEY="pk-lf-..."     # 从 Secrets Manager 获取
 export LANGFUSE_HOST="http://<alb-dns>.elb.amazonaws.com"
 
 # Trace 测试 (span + generation + score)
-python test_trace.py
+python tests/test_trace.py
 
 # Prompt 管理测试 (create + fetch + compile + trace)
-python test_prompt.py
+python tests/test_prompt.py
 
 # curl 原生命令测试
-bash test_trace.sh
+bash tests/test_trace.sh
 ```
 
 > API 密钥存储在 AWS Secrets Manager → `langfuse-configuration` → `LANGFUSE_SALT`、`LANGFUSE_NEXTAUTH_SECRET`。登录 Langfuse Web UI 后在 Settings → API Keys 创建项目密钥。
@@ -337,9 +337,10 @@ aws secretsmanager get-secret-value \
 ├── security_groups.tf   # 5 个安全组 (ALB/ECS/PG/Redis/EFS)
 ├── cloudwatch.tf        # CloudWatch 日志组
 ├── outputs.tf           # 输出值
-├── test_trace.py        # 🧪 Trace 测试脚本
-├── test_prompt.py       # 🧪 Prompt 管理测试脚本
-└── test_trace.sh        # 🧪 curl 测试脚本
+├── tests/
+│   ├── test_trace.py        # 🧪 Trace 测试脚本
+│   ├── test_prompt.py       # 🧪 Prompt 管理测试脚本
+│   └── test_trace.sh        # 🧪 curl 测试脚本
 ```
 
 ## 常见问题
