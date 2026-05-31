@@ -1,0 +1,139 @@
+层级,文件,变量名,类型,默认值,必填,描述,备注
+Deployment,deployment/variables.tf,usecase,string,无,是,Use case name (used in resource names). No spaces allowed.,资源命名前缀段1
+Deployment,deployment/variables.tf,site,string,无,是,Site abbreviation (used in resource names). No spaces allowed.,资源命名前缀段2
+Deployment,deployment/variables.tf,environment,string,无,是,dev/qa/prod (used in tags),资源命名前缀段3
+Deployment,deployment/variables.tf,project,string,无,是,Project name (used in tags),"组成 prefix = {usecase}-{site}-{environment}"
+Deployment,deployment/variables.tf,tags,map(string),无,是,Tags to be added to the resources.,全局资源标签
+Deployment,deployment/variables.tf,region,string,无,是,AWS region,部署区域
+Deployment,deployment/variables.tf,role_arn,string,无,是,AWS IAM deploy role ARN.,AssumeRole 跨账号部署
+Deployment,deployment/variables.tf,github_repo,string,无,是,GitHub Repo name,CI/CD 用
+Deployment,deployment/variables.tf,ecr_repo_url,string,无,是,ECR base / prefix repo name,镜像仓库地址
+Deployment,deployment/variables.tf,image_tag,number,无,是,ECR container image tag to deploy,镜像版本号（整数）
+Deployment,deployment/variables.tf,secret_id,string,无,是,Secret ID containing AzureAD client id and secret,AzureAD OIDC 凭证
+Deployment,deployment/variables.tf,r53_public_hosted_zone,string,无,是,Public hosted zone (e.g. ds.bayer.int.com),Route53 域名
+Deployment,deployment/variables.tf,r53_ns_delegation,map(list(string)),{},否,NS delegation for multi-account DNS,多账号 DNS 委托
+Deployment,deployment/variables.tf,subdomain,string,"""""(空)",否,App subdomain in hosted zone,子域名
+Deployment,deployment/variables.tf,network_type,string,无,是,private or public subnet deployment,决定 ALB 内外网类型
+Deployment,deployment/variables.tf,alb_name,string,null,否,Reuse existing ALB name,已有 ALB 名称（不复用则 null）
+Deployment,deployment/variables.tf,alb_additional_allowed_cidrs,list(string),[],否,Additional CIDR IPs for ALB access,ALB 额外白名单
+Deployment,deployment/variables.tf,waf_name,string,null,否,WAF name to associate with ALB,WAF Web ACL 名称
+Deployment,deployment/variables.tf,containers,map(object({...})),无,是,Container configuration (see below),核心：每个容器一个对象
+Deployment,deployment/variables.tf,containers.*.dockerfile_path,string,optional,否,Dockerfile path,构建用
+Deployment,deployment/variables.tf,containers.*.container_replicas,number,无,是,Number of container replicas,副本数
+Deployment,deployment/variables.tf,containers.*.container_port,number,无,是,Container port,容器端口
+Deployment,deployment/variables.tf,containers.*.cpu,number,无,是,CPU units for container,容器 CPU
+Deployment,deployment/variables.tf,containers.*.memory,number,无,是,Memory for container (MiB),容器内存
+Deployment,deployment/variables.tf,containers.*.gpu,number,optional,否,GPU count,GPU 数量
+Deployment,deployment/variables.tf,containers.*.entry_point,list(string),optional,否,Container entry point,ENTRYPOINT 覆盖
+Deployment,deployment/variables.tf,containers.*.command,list(string),optional,否,Container command,CMD 覆盖
+Deployment,deployment/variables.tf,containers.*.environment_vars,map(string),{},否,Environment variables,环境变量 Map
+Deployment,deployment/variables.tf,containers.*.ulimits,list(object({...})),optional,否,Ulimits for container,文件句柄限制
+Deployment,deployment/variables.tf,containers.*.secrets,list(object({name,valueFrom})),optional,否,Secrets from Secrets Manager,ARN 引用注入
+Deployment,deployment/variables.tf,containers.*.oidc_enabled_sidekick_container,bool,false,否,Enable OIDC for this container,旁路容器 OIDC 开关
+Deployment,deployment/variables.tf,containers.*.health_check_path,string,"/",否,Health check HTTP path,健康检查路径
+Deployment,deployment/variables.tf,containers.*.health_check_grace_period_seconds,number,180,否,Health check grace period,宽限期（秒）
+Deployment,deployment/variables.tf,containers.*.ecs_health_check_cmd,string,optional,否,ECS container health check command,容器级别健康命令
+Deployment,deployment/variables.tf,containers.*.ecs_enable_execute_command,bool,true,否,Enable ECS Exec,容器调试入口
+Deployment,deployment/variables.tf,containers.*.ecs_autoscaling_replicas,number,optional,否,Max replicas for autoscaling,扩容上限
+Deployment,deployment/variables.tf,containers.*.ecs_autoscaling_target_cpu_utilization,number,optional,否,CPU target for autoscaling,CPU 扩缩容阈值
+Deployment,deployment/variables.tf,containers.*.ecs_autoscaling_target_ram_utilization,number,optional,否,RAM target for autoscaling,内存扩缩容阈值
+Deployment,deployment/variables.tf,containers.*.efs_mount_paths,list(string),["/mnt/storage"],否,EFS mount paths in container,EFS 挂载点列表
+Deployment,deployment/variables.tf,containers.*.efs_mount_read_only,bool,false,否,EFS read only mount,只读挂载
+Deployment,deployment/variables.tf,containers.*.ephemeral_storage_size,number,optional,否,Fargate ephemeral storage (GiB),临时存储大小
+Deployment,deployment/variables.tf,containers.*.alb_used,bool,true,否,Register with ALB,是否挂载到 ALB
+Deployment,deployment/variables.tf,containers.*.alb_listener_rule_priority,number,optional,否,ALB listener rule priority,路由优先级
+Deployment,deployment/variables.tf,containers.*.additional_target_group_arns,list(string),[],否,Additional ALB target groups,额外的目标组
+Deployment,deployment/variables.tf,containers.*.stickiness,bool,false,否,Enable ALB stickiness,会话保持
+Deployment,deployment/variables.tf,containers.*.access_limited_to_main,bool,true,否,Restrict access from VPC only,VPC 内部限制
+Deployment,deployment/variables.tf,containers.*.use_path_instead_subdomain,bool,false,否,Route by path instead of subdomain,路径路由 vs 子域名路由
+Deployment,deployment/variables.tf,containers.*.launch_type,string,"FARGATE",否,Launch type: FARGATE or EC2,启动类型
+Deployment,deployment/variables.tf,containers.*.instance_type,string,optional,否,EC2 instance type (EC2 launch only),EC2 机型
+Deployment,deployment/variables.tf,containers.*.ami,string,optional,否,AMI ID (EC2 launch only),自定义 AMI
+Deployment,deployment/variables.tf,containers.*.ebs_volume_size,number,30,否,EBS volume size (EC2 launch only),EBS 大小
+Deployment,deployment/variables.tf,containers.*.privileged,bool,false,否,Privileged mode,特权模式
+Deployment,deployment/variables.tf,containers.*.user_data_path,string,optional,否,User data script path (EC2 only),EC2 初始化脚本
+Deployment,deployment/variables.tf,containers.*.destroy_before_deploy,bool,false,否,Destroy before deploy,部署策略
+Deployment,deployment/variables.tf,containers.*.alarms,object({...}),{},否,Per-container alarm config,容器级别告警配置
+Deployment,deployment/variables.tf,containers.*.alarms.cpu.enabled,bool,true,否,Enable CPU alarm,CPU 告警开关
+Deployment,deployment/variables.tf,containers.*.alarms.cpu.statistic,string,"Average",否,CPU alarm statistic,统计方法
+Deployment,deployment/variables.tf,containers.*.alarms.cpu.period,number,300,否,CPU alarm period (seconds),采样周期
+Deployment,deployment/variables.tf,containers.*.alarms.cpu.evaluation_periods,number,2,否,CPU alarm evaluation periods,评估周期数
+Deployment,deployment/variables.tf,containers.*.alarms.cpu.threshold,number,80,否,CPU alarm threshold (percent),报警阈值
+Deployment,deployment/variables.tf,containers.*.alarms.cpu.comparison_operator,string,"GreaterThanThreshold",否,CPU alarm comparison,比较运算符
+Deployment,deployment/variables.tf,containers.*.alarms.memory.*,同上,同上,同上,否,Memory alarm (同 cpu 结构),内存告警
+Deployment,deployment/variables.tf,containers.*.alarms.container_count.*,同上,同上,同上,否,Container count alarm,实例数量告警
+Deployment,deployment/variables.tf,alarm_target,object({...}),{},否,Alarm target (email_recipients / sns_topic_arn),告警通知目标
+Deployment,deployment/variables.tf,main_container,string,"app",否,Main container name,主容器名称
+Deployment,deployment/variables.tf,ecs_shutdown_cron,string,null,否,Cron for ECS shutdown,"定时关停 (e.g. cron(0 17 ? * FRI *))"
+Deployment,deployment/variables.tf,ecs_restart_cron,string,null,否,Cron for ECS restart,"定时重启 (e.g. cron(0 9 ? * MON *))"
+Deployment,deployment/variables.tf,ecs_schedule_timezone,string,"UTC",否,Timezone for scheduling,定时任务时区
+Deployment,deployment/variables.tf,ecs_schedule_retry,number,0,否,Max retries for schedule,定时任务重试次数
+Deployment,deployment/variables.tf,app_type_internal,bool,true,否,Is this an internal app,是否内部应用
+Deployment,deployment/variables.tf,mount_efs_volume,bool,false,否,Create and mount EFS volume,EFS 开关
+Deployment,deployment/variables.tf,efs_gid_uid,string,"0:0",否,GID:UID for EFS,EFS 权限
+Deployment,deployment/variables.tf,efs_additional_allowed_cidrs,list(string),[],否,Additional CIDR for EFS access,EFS 额外白名单
+Deployment,deployment/variables.tf,oidc_user_info_endpoint,string,"https://graph.microsoft.com/oidc/userinfo",否,OIDC user info endpoint,AzureAD OIDC 端点
+Deployment,deployment/variables.tf,oidc_scope,list(string),["openid","offline_access","email","profile"],否,OIDC scope,OIDC 权限范围
+Deployment,deployment/variables.tf,ecs_security_group_egress,map(object({...})),"allow_all: 0-65535/0.0.0.0/0",否,ECS egress SG rules,出站规则
+Deployment,deployment/variables.tf,ecs_security_group_ingress,map(object({...})),{},否,Additional ECS ingress SG rules,附加入站规则
+Deployment,deployment/variables.tf,security_group_id,list(string),[],否,Security group of RDS,RDS 安全组 ID 列表
+
+Module,ph-ps-tf-modules/variables.tf,environment,string,无,是,dev/qa/demo/nprd/prod,环境名
+Module,ph-ps-tf-modules/variables.tf,prefix,string,无,是,Prefix for all resources,资源前缀（来自 deployment prefix）
+Module,ph-ps-tf-modules/variables.tf,vpc_id,string,null,否,Deprecated: VPC ID,已废弃参数
+Module,ph-ps-tf-modules/variables.tf,region,string,无,是,Region name,AWS 区域
+Module,ph-ps-tf-modules/variables.tf,ecr_repo,string,无,是,ECR repo URL (must contain .amazonaws.com/),ECR 仓库地址
+Module,ph-ps-tf-modules/variables.tf,image_tag,number,无,是,ECR container image tag to deploy,镜像版本号
+Module,ph-ps-tf-modules/variables.tf,subnet_ids_public,list(string),无,是,Public subnet IDs,公有子网列表
+Module,ph-ps-tf-modules/variables.tf,subnet_ids_private,list(string),无,是,Private subnet IDs,私有子网列表
+Module,ph-ps-tf-modules/variables.tf,r53_public_hosted_zone,string,无,是,Route53 public hosted zone name,Route53 域名
+Module,ph-ps-tf-modules/variables.tf,r53_subdomain,string,无,是,Route53 record subdomain,子域名
+Module,ph-ps-tf-modules/variables.tf,r53_ns_delegation,map(list(string)),{},否,NS delegation for multi-account,多账号 DNS 委托
+Module,ph-ps-tf-modules/variables.tf,client_id,string,无,是 (当有 OIDC),AzureAD OIDC client id (sensitive),AzureAD 客户端 ID
+Module,ph-ps-tf-modules/variables.tf,client_secret,string,无,是 (当有 OIDC),AzureAD OIDC client secret (sensitive),AzureAD 客户端密钥
+Module,ph-ps-tf-modules/variables.tf,alb_name,string,null,否,Reuse existing ALB name,已有 ALB 名称
+Module,ph-ps-tf-modules/variables.tf,alb_type_internal,bool,无,是,Deploy ALB to private subnet (VPN only),ALB 内网标记
+Module,ph-ps-tf-modules/variables.tf,alb_additional_allowed_cidrs,list(string),默认含 12 个 NAT Gateway CIDR,否,Additional ALB allowed CIDRs,含 Bayer 全球 NAT Gateway IP 白名单
+Module,ph-ps-tf-modules/variables.tf,waf_name,string,null,否,WAF name for ALB association,WAF 名称
+Module,ph-ps-tf-modules/variables.tf,ecs_task_policy,string,无,是,ECS task policy as JSON,来自 deployment iam.tf
+Module,ph-ps-tf-modules/variables.tf,containers,map(object({...})),无,是,Container configuration (与 deployment 同名变量结构一致),容器配置
+Module,ph-ps-tf-modules/variables.tf,alarm_target,object({...}),{},否,Alarm target configuration,告警目标
+Module,ph-ps-tf-modules/variables.tf,main_container,string,"app",否,Main container name,主容器名
+Module,ph-ps-tf-modules/variables.tf,lambda_runtime,string,"python3.12",否,Python runtime for Lambda scheduler,Lambda Python 版本
+Module,ph-ps-tf-modules/variables.tf,ecs_shutdown_cron,string,null,否,Cron for ECS shutdown,定时关停
+Module,ph-ps-tf-modules/variables.tf,ecs_restart_cron,string,null,否,Cron for ECS restart,定时重启
+Module,ph-ps-tf-modules/variables.tf,ecs_schedule_timezone,string,"UTC",否,Timezone for scheduling,定时任务时区
+Module,ph-ps-tf-modules/variables.tf,ecs_schedule_retry,number,0,否,Max retries for schedule,定时重试
+Module,ph-ps-tf-modules/variables.tf,app_type_internal,bool,true,否,Is it an internal app,内部应用标记
+Module,ph-ps-tf-modules/variables.tf,mount_efs_volume,bool,false,否,Create and mount EFS volume,EFS 开关
+Module,ph-ps-tf-modules/variables.tf,efs_gid_uid,string,"0:0",否,GID:UID for EFS,EFS 权限
+Module,ph-ps-tf-modules/variables.tf,efs_additional_allowed_cidrs,list(string),[],否,Additional CIDR for EFS,EFS 额外白名单
+Module,ph-ps-tf-modules/variables.tf,oidc_user_info_endpoint,string,"https://graph.microsoft.com/oidc/userinfo",否,OIDC user info endpoint,OIDC 端点
+Module,ph-ps-tf-modules/variables.tf,oidc_scope,list(string),["openid","offline_access","email","profile"],否,OIDC scope,OIDC 权限范围
+Module,ph-ps-tf-modules/variables.tf,ecs_security_group_egress,map(object({...})),"allow_all",否,ECS egress SG rules,出站规则
+Module,ph-ps-tf-modules/variables.tf,ecs_security_group_ingress,map(object({...})),{},否,Additional ECS ingress SG rules,入站规则
+
+RDS,deployment/modules/rds/variables.tf,create_database,bool,false,是 (deployment 层),Whether to create RDS,RDS 创建开关
+RDS,deployment/modules/rds/variables.tf,identifier,string,null,是,The name of the RDS instance,实例名
+RDS,deployment/modules/rds/variables.tf,allocated_storage,number,20,否,Allocated storage (GB) [20-1000],存储大小
+RDS,deployment/modules/rds/variables.tf,max_allocated_storage,number,30,否,Max allocated storage for autoscaling,存储上限
+RDS,deployment/modules/rds/variables.tf,storage_type,string,"gp2",否,Storage type (standard/gp2/iops),存储类型
+RDS,deployment/modules/rds/variables.tf,storage_encrypted,bool,true,否,Enable storage encryption,存储加密
+RDS,deployment/modules/rds/variables.tf,kms_key_id_rds_instance,string,null,否,KMS key ARN for encryption,KMS 加密密钥
+RDS,deployment/modules/rds/variables.tf,instance_class,string,"db.t3.small",否,Instance type,实例类型
+RDS,deployment/modules/rds/variables.tf,engine,string,"postgres",否,Database engine,数据库引擎
+RDS,deployment/modules/rds/variables.tf,engine_version,string,16.6,否,Engine version,数据库版本
+RDS,deployment/modules/rds/variables.tf,db_name,string,null,否,Database name,数据库名
+RDS,deployment/modules/rds/variables.tf,username,string,null,否,Master username,用户名
+RDS,deployment/modules/rds/variables.tf,password,string,null,否,Master password (stored in state),密码（明文存 State）
+RDS,deployment/modules/rds/variables.tf,port,number,5432,否,Database port,端口
+RDS,deployment/modules/rds/variables.tf,multi_az,bool,false,否,Multi-AZ deployment,多 AZ
+RDS,deployment/modules/rds/variables.tf,deletion_protection,bool,false,否,Enable deletion protection,删除保护
+RDS,deployment/modules/rds/variables.tf,backup_retention_period,number,7,否,Backup retention (days),备份保留天数
+RDS,deployment/modules/rds/variables.tf,monitoring_interval,number,0,否,Enhanced monitoring interval (0=off),增强监控
+RDS,deployment/modules/rds/variables.tf,performance_insights_enabled,bool,false,否,Enable Performance Insights,性能洞察
+RDS,deployment/modules/rds/variables.tf,vpc_security_group_ids,list(string),[],否,Security group IDs,RDS 安全组
+RDS,deployment/modules/rds/variables.tf,subnet_ids,list(string),[],否,Subnet IDs for DB subnet group,子网列表
+RDS,deployment/modules/rds/variables.tf,publicly_accessible,bool,false,否,Public accessibility,公网可达性
+RDS,deployment/modules/rds/variables.tf,skip_final_snapshot,bool,true,否,Skip final snapshot on delete,删除时跳过快照
+ECR,ecr/variables.tf,(独立 Terraform 栈),,,,ECR 仓库单独管理,

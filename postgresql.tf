@@ -1,0 +1,56 @@
+# =============================================================================
+# Aurora PostgreSQL Serverless v2
+# =============================================================================
+
+resource "random_password" "postgres_password" {
+  length      = 64
+  special     = false
+  min_lower   = 1
+  min_upper   = 1
+  min_numeric = 1
+}
+
+resource "aws_db_subnet_group" "postgres" {
+  name       = "${var.name}-postgres"
+  subnet_ids = local.private_subnets
+  tags       = merge(local.base_tags, { Name = "${var.name}-postgres" })
+}
+
+resource "aws_rds_cluster" "postgres" {
+  cluster_identifier           = "${var.name}-postgres"
+  engine                       = "aurora-postgresql"
+  engine_mode                  = "provisioned"
+  engine_version               = var.postgres_version
+  database_name                = "langfuse"
+  master_username              = "langfuse"
+  master_password              = random_password.postgres_password.result
+  db_subnet_group_name         = aws_db_subnet_group.postgres.name
+  vpc_security_group_ids       = [aws_security_group.postgres.id]
+  skip_final_snapshot          = true
+  storage_encrypted            = true
+  backup_retention_period      = 7
+  preferred_backup_window      = "03:00-04:00"
+  preferred_maintenance_window = "mon:04:00-mon:05:00"
+
+  serverlessv2_scaling_configuration {
+    min_capacity = var.postgres_min_capacity
+    max_capacity = var.postgres_max_capacity
+  }
+
+  tags = merge(local.base_tags, { Name = "${var.name}-postgres" })
+}
+
+resource "aws_rds_cluster_instance" "postgres" {
+  count               = var.postgres_instance_count
+  identifier          = "${var.name}-postgres-${count.index + 1}"
+  cluster_identifier  = aws_rds_cluster.postgres.id
+  instance_class      = "db.serverless"
+  engine              = aws_rds_cluster.postgres.engine
+  engine_version      = aws_rds_cluster.postgres.engine_version
+  publicly_accessible = false
+
+  performance_insights_enabled          = true
+  performance_insights_retention_period = 7
+
+  tags = merge(local.base_tags, { Name = "${var.name}-postgres-${count.index + 1}" })
+}
