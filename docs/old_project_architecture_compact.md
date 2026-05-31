@@ -1,4 +1,4 @@
-# 旧项目架构（压缩版，可在 mermaid.live 渲染）
+# 旧项目架构（压缩版）
 
 ```mermaid
 graph LR
