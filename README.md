@@ -26,7 +26,7 @@
 
 ```bash
 # 1. 克隆项目
-git clone <your-repo-url> langfuse-ecs
+git clone https://github.com/geoffrey-peng/terraform-aws-langfuse-ecs-fargate.git langfuse-ecs
 cd langfuse-ecs
 
 # 2. 按需修改配置（所有可配项均已在 terraform.tfvars 中列出并注释）
